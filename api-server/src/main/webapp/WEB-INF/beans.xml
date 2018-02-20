@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jaxrs="http://cxf.apache.org/jaxrs" 
+		xmlns:context="http://www.springframework.org/schema/context" xmlns:util="http://www.springframework.org/schema/util" 
+		xsi:schemaLocation=" http://www.springframework.org/schema/beans  http://www.springframework.org/schema/beans/spring-beans-4.2.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <import resource="classpath:META-INF/cxf/cxf.xml"/>
+    <import resource="classpath:META-INF/cxf/cxf-servlet.xml" />            
+    
+    <!-- Dummy users -->
+	<util:map id="users">
+		<entry key="test" value="test"/>
+        <entry key="gaurang" value="gaurang"/>
+        <entry key="yahoo" value="google"/>
+    </util:map>
+    
+     <bean id="userSecurityContext" class="com.gaurang.api.SecurityContextFilter">
+         <property name="users" ref="users" />
+         
+     </bean>
+    
+    
+    <bean id="tvServiceClientFactory" class="org.apache.cxf.jaxrs.client.JAXRSClientFactoryBean">
+	    <property name="address" value="http://localhost:8080/oauth2-authorization-server-1.0-SNAPSHOT/oauth2/validate"/>
+	    <property name="headers">
+	        <map>
+	            <entry key="Accept" value="application/xml"/>
+	            <entry key="Content-Type" value="application/x-www-form-urlencoded"/>
+	        </map>
+	    </property>
+	</bean>
+	      
+	<bean id="tvServiceClient" factory-bean="tvServiceClientFactory" factory-method="createWebClient"/>
+	 
+	<bean id="tokenValidator" class="org.apache.cxf.rs.security.oauth2.filters.AccessTokenValidatorClient">
+	    <property name="tokenValidatorClient" ref="tvServiceClient"/>
+	</bean>
+	
+	<bean id="jwtTokenValidator" class="org.apache.cxf.rs.security.oauth2.filters.JwtAccessTokenValidator"/>
+	 
+	<bean id="oauthFilter" class="org.apache.cxf.rs.security.oauth2.filters.OAuthRequestFilter">
+	    <!--property name="tokenValidator" ref="tokenValidator"/-->
+	    <property name="tokenValidator" ref="jwtTokenValidator"/>
+	</bean>
+	 
+	<bean id="myApp" class="com.gaurang.api.HelloWorld"/>
+	
+	<jaxrs:server id="services" address="/">
+		<jaxrs:serviceBeans>
+			<ref bean="myApp"/>
+		</jaxrs:serviceBeans>
+		<jaxrs:providers>
+			<bean class="org.codehaus.jackson.jaxrs.JacksonJsonProvider" />
+			<ref bean="oauthFilter"/>
+			<!--ref bean="userSecurityContext"/-->
+		</jaxrs:providers>
+		<jaxrs:properties>	         
+	         <entry key="rs.security.signature.in.properties" value="classpath:rs.security.properties"/>             
+	    </jaxrs:properties>
+	</jaxrs:server>
+	
+</beans>

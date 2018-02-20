@@ -1,0 +1,21 @@
+<jboss-deployment-structure xmlns="urn:jboss:deployment-structure:1.2">
+	<deployment>
+		<dependencies>
+			<!-- Exclude JAX-RS: 2. re-import the javaee.api and exclude the JAX-RS classes -->
+			<module name="javaee.api">
+				<imports>
+					<exclude path="javax/ws/**" />
+				</imports>
+			</module>
+		</dependencies>
+		<exclusions>
+			<!-- Exclude JAX-RS: 1. exclude the javaee.api completely -->
+			<module name="javaee.api" />
+		</exclusions>
+		<exclude-subsystems>
+			<subsystem name="webservices" />
+			<subsystem name="resteasy" />
+			<subsystem name="jaxrs" />
+		</exclude-subsystems>
+	</deployment>
+</jboss-deployment-structure>  

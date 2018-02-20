@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		xmlns:jaxrs="http://cxf.apache.org/jaxrs" 
+		xmlns:jaxrs-client="http://cxf.apache.org/jaxrs-client"
+		xmlns:context="http://www.springframework.org/schema/context" 
+		xsi:schemaLocation=" http://www.springframework.org/schema/beans  http://www.springframework.org/schema/beans/spring-beans-4.2.xsd 
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd 
+			http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
+			http://cxf.apache.org/jaxrs-client http://cxf.apache.org/schemas/jaxrs-client.xsd">
+    <import resource="classpath:META-INF/cxf/cxf.xml"/>
+    <context:property-placeholder/>
+    <context:annotation-config/>
+
+	<bean id="apiServiceClient" class="org.apache.cxf.jaxrs.client.WebClient" factory-method="create">
+         <constructor-arg type="java.lang.String" value="http://localhost:8080/api-server-1.0-SNAPSHOT/api/test"/>
+    </bean>
+     
+    <!-- WebClient for communicating with OAuth2 AccessTokenService -->
+	<jaxrs-client:client id="toeknServiceClient" serviceClass="org.apache.cxf.jaxrs.client.WebClient"
+	    address="http://localhost:8080/oauth2-authorization-server-1.0-SNAPSHOT/oauth2/token">
+	    <jaxrs-client:headers>
+	       <entry key="Accept" value="application/json"/>
+	    </jaxrs-client:headers>
+	</jaxrs-client:client>
+     
+    <bean id="quoteService" class="com.clientapp.QuoteService">
+		<property name="apiService" ref="apiServiceClient" />
+	</bean>
+	
+	<bean id="codeManager" class="org.apache.cxf.rs.security.oauth2.client.MemoryClientCodeStateManager"/>
+	
+	<bean id="brokerClientTokenContextManager" class="org.apache.cxf.rs.security.oauth2.client.MemoryClientTokenContextManager"/>
+ 
+	<!-- the consumer pre-registered with OAuth2 servers -->
+	<bean id="consumer" class="org.apache.cxf.rs.security.oauth2.client.Consumer">
+		<constructor-arg name="id" type="java.lang.String" value="ClientApp" />
+		<constructor-arg name="secret" type="java.lang.String" value="ClientApp" />	    
+	</bean>
+	
+	<bean id="clientCodeRequestFilter" class="org.apache.cxf.rs.security.oauth2.client.ClientCodeRequestFilter">
+		<property name="authorizationServiceUri" value="http://localhost:8080/oauth2-authorization-server-1.0-SNAPSHOT/oauth2/authorize"/>
+		<property name="accessTokenServiceClient" ref="toeknServiceClient"/>
+		<property name="clientTokenContextManager" ref="brokerClientTokenContextManager"/>
+		<property name="clientCodeStateManager" ref="codeManager"/>
+		<property name="consumer" ref="consumer"/>
+		<!--property name="startUri" value="view-quote"/-->		
+		<property name="scopes" value="apiAccess refreshToken"/>
+		<property name="expiryThreshold" value="5"/>
+	</bean>
+	
+	<bean id="brokerCustomClientTokenContextProvider" class="com.clientapp.CustomClientTokenContextProvider"/>
+	
+	<bean id="brokerSecurityContext" class="com.clientapp.SecurityContextFilter">
+         <property name="users">
+         	<map><entry key="test" value="test"/></map>
+         </property>         
+	</bean>
+
+    <jaxrs:server id="services" address="/">
+        <jaxrs:serviceBeans>
+            <ref bean="quoteService"/>
+        </jaxrs:serviceBeans>
+        <jaxrs:providers>
+        	<ref bean="brokerSecurityContext" />
+            <ref bean="clientCodeRequestFilter" />  
+            <ref bean="brokerCustomClientTokenContextProvider" />
+        </jaxrs:providers>
+    </jaxrs:server>
+</beans>
