@@ -1,4 +1,4 @@
-package ca.sgicanada.user.data;
+package com.gaurang.user.data;
 
 public class User {
 

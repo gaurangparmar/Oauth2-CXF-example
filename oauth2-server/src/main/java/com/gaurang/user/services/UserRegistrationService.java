@@ -1,4 +1,4 @@
-package ca.sgicanada.user.services;
+package com.gaurang.user.services;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
 
-import ca.sgicanada.user.data.User;
+import com.gaurang.user.data.User;
 
 @Path("/")
 public class UserRegistrationService {

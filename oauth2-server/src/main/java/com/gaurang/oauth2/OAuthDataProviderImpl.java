@@ -1,4 +1,4 @@
-package ca.sgicanada.oauth2;
+package com.gaurang.oauth2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +12,7 @@ import org.apache.cxf.rs.security.oauth2.grants.code.DefaultEHCacheCodeDataProvi
 import org.apache.cxf.rs.security.oauth2.provider.OAuthServiceException;
 import org.apache.cxf.rs.security.oauth2.utils.OAuthConstants;
 
-public class SGIOAuthDataProviderImpl extends DefaultEHCacheCodeDataProvider {
+public class OAuthDataProviderImpl extends DefaultEHCacheCodeDataProvider {
 	private static final Set<String> NON_REDIRECTION_FLOWS = new HashSet<>(Arrays.asList(OAuthConstants.CLIENT_CREDENTIALS_GRANT, OAuthConstants.RESOURCE_OWNER_GRANT));
 
 	@Override

@@ -1,4 +1,4 @@
-package ca.sgicanada.oauth2;
+package com.gaurang.oauth2;
 
 import java.util.Properties;
 

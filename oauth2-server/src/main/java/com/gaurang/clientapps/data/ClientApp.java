@@ -1,4 +1,4 @@
-package ca.sgicanada.clientapps.data;
+package com.gaurang.clientapps.data;
 
 public class ClientApp {
 

@@ -1,4 +1,4 @@
-package ca.sgicanada.oauth2;
+package com.gaurang.oauth2;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -19,9 +19,9 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.rs.security.oauth2.common.Client;
 import org.apache.cxf.security.SecurityContext;
 
-import ca.sgicanada.clientapps.services.ClientAppRegistrationService;
-import ca.sgicanada.user.data.User;
-import ca.sgicanada.user.services.UserRegistrationService;
+import com.gaurang.clientapps.services.ClientAppRegistrationService;
+import com.gaurang.user.data.User;
+import com.gaurang.user.services.UserRegistrationService;
 
 public class SecurityContextFilter implements ContainerRequestFilter {
 
@@ -144,7 +144,7 @@ public class SecurityContextFilter implements ContainerRequestFilter {
 	}
 
 	private Response createFaultResponse() {
-		return Response.status(401).header("WWW-Authenticate", "Basic realm=\"oauth2.sgicanada.com\"").build();
+		return Response.status(401).header("WWW-Authenticate", "Basic realm=\"oauth2.gaurang.com\"").build();
 	}
 
 }

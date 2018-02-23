@@ -1,6 +1,6 @@
-package ca.sgicanada.clientapps.services;
+package com.gaurang.clientapps.services;
 
-import ca.sgicanada.oauth2.SGIOAuthDataProviderImpl;
+import com.gaurang.oauth2.OAuthDataProviderImpl;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,9 +22,9 @@ import org.apache.cxf.rs.security.oauth2.common.Client;
 @Path("/")
 public class ClientAppRegistrationService {
 	
-	private SGIOAuthDataProviderImpl dataProvider;
+	private OAuthDataProviderImpl dataProvider;
 	
-	public void setDataProvider(SGIOAuthDataProviderImpl dataProvider) {
+	public void setDataProvider(OAuthDataProviderImpl dataProvider) {
 		this.dataProvider = dataProvider;
 	}
 

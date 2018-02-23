@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  http://www.springframework.org/schema/beans/spring-beans-4.2.xsd 
+						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.2.xsd 
+						http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
+						http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+	<import resource="classpath:META-INF/cxf/cxf.xml" />	
+	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
+	
+	<!-- Dummy users -->
+	<util:map id="users">
+		<entry key="test" value="test"/>
+        <entry key="gaurang" value="gaurang"/>
+        <entry key="yahoo" value="google"/>
+    </util:map>
+    
+    <util:list id="noCheckURLS">
+    	<!--value>authorize</value>
+    	<value>authorize/decision</value>
+    	<value>decision</value>
+    	<value>token</value>
+    	<value>introspect</value>
+    	<value>revoke</value-->
+    	<value>validate</value>
+    </util:list>
+	
+	<!-- List of accepted scopes -->
+    <util:map id="supportedScopes">
+        <entry key="apiAccess" value="Access the API" />
+        <entry key="email" value="Access the email address" />
+        <entry key="profile" value="Access the profile claims" />
+        <entry key="roles" value="Access the user roles" />
+        <entry key="refreshToken" value="Refresh access tokens" />
+    </util:map>
+
+    <util:map id="supportedClaims">
+        <entry key="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role" value="roles" />
+    </util:map> 
+    
+    <!-- 
+        List of required scopes that must be available in request URIs when client redirects users to SGI API
+    -->
+    <util:list id="coreScopes">
+        <value>apiAccess</value>
+        <value>refreshToken</value>
+    </util:list>
+    
+    <!-- 
+        Typically the scopes authorized by the user will be reported back to the client,
+        reporting an approved refreshToken scope is currently disabled  
+    -->
+    <util:list id="invisibleToClientScopes">
+        <value>refreshToken</value>
+    </util:list>
+    
+    <!-- implements OAuthDataProvider -->
+	<bean id="oauthDataProvider" class="com.gaurang.oauth2.SGIOAuthDataProviderImpl" init-method="init" destroy-method="close">
+        <!-- List of accepted scopes -->  
+        <property name="supportedScopes" ref="supportedScopes"/>
+
+        <!-- 
+             List of scopes that the consent/authorization form should make 
+             selected by default. For example, asking a user to do an extra click
+             to approve an "sgi api access" scope is a redundant operation because this scope
+             is required anyway.
+        -->
+        <property name="defaultScopes" ref="coreScopes"/>
+        <property name="invisibleToClientScopes" ref="invisibleToClientScopes"/>
+        <property name="accessTokenLifetime" value="3600"/>
+        <!-- If below value not specified then by default refresh token are eternal -->
+        <property name="refreshTokenLifetime" value="86400"/>
+        <!--property name="useJwtFormatForAccessTokens" value="true"/>
+        <property name="storeJwtTokenKeyOnly" value="true"/-->
+        <!--property name="supportPreauthorizedTokens" value="true"/-->
+    </bean>
+	<!-- Providers -->
+	<bean id="oauthJsonProvider" class="org.apache.cxf.rs.security.oauth2.provider.OAuthJSONProvider"/>
+	
+	<bean id="jacksonJsonProvider" class="org.codehaus.jackson.jaxrs.JacksonJsonProvider"/>
+
+	<!-- It's a primitive implementation which only recognizes a single user in memory -->
+     <bean id="userSecurityContext" class="com.gaurang.oauth2.SecurityContextFilter">
+         <property name="userAccounts" ref="users" />
+         <property name="userRegistrationService" ref="userRegService" />
+         <property name="clientAppRegistrationService" ref="clientAppRegService" />
+         <property name="noCheckURLS" ref="noCheckURLS" />
+     </bean>	
+     
+     <bean id="oauth2AuthorizeView" class="org.apache.cxf.jaxrs.provider.RequestDispatcherProvider">
+         <property name="classResources">
+            <map>
+              <entry key="org.apache.cxf.rs.security.oauth2.common.OAuthAuthorizationData" value="oauth2Authorize.jsp"/>              
+            </map>
+         </property>
+         <property name="logRedirects" value="true"/>
+     </bean>
+
+	<!-- CXF Ouath Grant Handlers -->
+	
+	<bean id="refreshTokenGrantHandler" class="org.apache.cxf.rs.security.oauth2.grants.refresh.RefreshTokenGrantHandler">
+        <property name="dataProvider" ref="oauthDataProvider"/>        
+    </bean>
+    <bean id="authorizationCodeGrantHandler" class="org.apache.cxf.rs.security.oauth2.grants.code.AuthorizationCodeGrantHandler">
+        <property name="dataProvider" ref="oauthDataProvider"/>        
+    </bean>
+    <bean id="clientCredentialsGrantHandler" class="org.apache.cxf.rs.security.oauth2.grants.clientcred.ClientCredentialsGrantHandler">
+        <property name="dataProvider" ref="oauthDataProvider"/>        
+    </bean>
+    <bean id="jwtBearerGrantHandler" class="org.apache.cxf.rs.security.oauth2.grants.jwt.JwtBearerGrantHandler">
+        <property name="dataProvider" ref="oauthDataProvider"/>        
+    </bean>
+    <bean id="resourceOwnerGrantHandler" class="org.apache.cxf.rs.security.oauth2.grants.owner.ResourceOwnerGrantHandler">
+        <property name="dataProvider" ref="oauthDataProvider"/>        
+    </bean>
+    
+    <util:list id="grantHandlers">
+        <ref bean="refreshTokenGrantHandler"/>
+        <!-- Add more custom grant handlers as needed -->
+    </util:list>
+	
+	<!-- CXF Ouath Services -->
+	<bean id="accessTokenService" class="org.apache.cxf.rs.security.oauth2.services.AccessTokenService">
+		<property name="dataProvider" ref="oauthDataProvider" />
+		<property name="grantHandlers" ref="grantHandlers"/>
+		<property name="canSupportPublicClients" value="true"/>
+		
+	</bean>
+
+	<bean id="accessTokenValidateService" class="org.apache.cxf.rs.security.oauth2.services.AccessTokenValidatorService">
+		<property name="dataProvider" ref="oauthDataProvider" />
+	</bean>
+	
+	<!-- Access Token Revocation service -->
+    <bean id="accessTokenRevocationService" class="org.apache.cxf.rs.security.oauth2.services.TokenRevocationService">
+        <property name="dataProvider" ref="oauthDataProvider"/>
+    </bean>
+    <!-- Access Token Introspection service -->
+    <bean id="accessTokenIntrospectionService" class="org.apache.cxf.rs.security.oauth2.services.TokenIntrospectionService">
+        <property name="dataProvider" ref="oauthDataProvider"/>
+        <property name="blockUnauthorizedRequests" value="false"/> 
+    </bean>
+    
+    <bean id="defaultResourceOwnerNameProvider" class="org.apache.cxf.rs.security.oauth2.provider.DefaultResourceOwnerNameProvider" />
+    
+    <bean id="authorizationService" class="org.apache.cxf.rs.security.oauth2.services.AuthorizationCodeGrantService">
+		<property name="dataProvider" ref="oauthDataProvider" />
+		<property name="resourceOwnerNameProvider" ref="defaultResourceOwnerNameProvider" />
+	</bean>
+
+	<bean id="implicitService" class="org.apache.cxf.rs.security.oauth2.services.ImplicitGrantService">
+		<property name="dataProvider" ref="oauthDataProvider" />
+	</bean>
+	<!-- Putting in utility list so we get common end point -->
+	<util:list id="servicesList">
+		<ref bean="authorizationService" />
+		<ref bean="implicitService" />
+	</util:list>
+	
+	<bean id="oauth2Service" class="org.apache.cxf.rs.security.oauth2.services.AuthorizationService">
+	    <property name="services" ref="servicesList"/>
+	</bean>
+
+	<bean id="clientAppRegService" class="com.gaurang.clientapps.services.ClientAppRegistrationService">
+         <property name="dataProvider" ref="oauthDataProvider"/>
+     </bean>
+     
+     <bean id="userRegService" class="com.gaurang.user.services.UserRegistrationService">
+     	<property name="users" ref="users" />
+     </bean>
+
+	<bean id="keyPasswordProvider" class="com.gaurang.oauth2.PrivateKeyPasswordProviderImpl"/>
+
+	<jaxrs:server id="oauthServer" address="/">
+		<jaxrs:serviceBeans>
+			<ref bean="accessTokenService" />
+			<ref bean="accessTokenValidateService" />
+			<ref bean="accessTokenIntrospectionService"/>
+            <ref bean="accessTokenRevocationService"/>
+            <!--<ref bean="authorizationService" />
+			<ref bean="implicitService" />-->
+			<ref bean="oauth2Service"/>
+			<ref bean="clientAppRegService"/>
+			<ref bean="userRegService"/>
+		</jaxrs:serviceBeans>
+		<jaxrs:providers>
+           <ref bean="oauthJsonProvider"/>
+           <ref bean="jacksonJsonProvider"/>           
+           <ref bean="oauth2AuthorizeView"/>           
+           <ref bean="userSecurityContext"/>
+        </jaxrs:providers>
+        <jaxrs:properties>
+            <entry key="rs.security.signature.properties" value="classpath:rs.security.properties"/>
+            <entry key="rs.security.signature.key.password.provider" value-ref="keyPasswordProvider"/>
+        </jaxrs:properties>
+	</jaxrs:server>
+
+</beans>

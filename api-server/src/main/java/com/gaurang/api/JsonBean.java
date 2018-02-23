@@ -1,4 +1,4 @@
-package ca.sgicanada.api;
+package com.gaurang.api;
 
 
 public class JsonBean {
