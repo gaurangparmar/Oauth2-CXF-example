@@ -40,7 +40,7 @@
     </util:map> 
     
     <!-- 
-        List of required scopes that must be available in request URIs when client redirects users to SGI API
+        List of required scopes that must be available in request URIs when client redirects users to  API
     -->
     <util:list id="coreScopes">
         <value>apiAccess</value>
@@ -56,14 +56,14 @@
     </util:list>
     
     <!-- implements OAuthDataProvider -->
-	<bean id="oauthDataProvider" class="com.gaurang.oauth2.SGIOAuthDataProviderImpl" init-method="init" destroy-method="close">
+	<bean id="oauthDataProvider" class="com.gaurang.oauth2.OAuthDataProviderImpl" init-method="init" destroy-method="close">
         <!-- List of accepted scopes -->  
         <property name="supportedScopes" ref="supportedScopes"/>
 
         <!-- 
              List of scopes that the consent/authorization form should make 
              selected by default. For example, asking a user to do an extra click
-             to approve an "sgi api access" scope is a redundant operation because this scope
+             to approve an " api access" scope is a redundant operation because this scope
              is required anyway.
         -->
         <property name="defaultScopes" ref="coreScopes"/>

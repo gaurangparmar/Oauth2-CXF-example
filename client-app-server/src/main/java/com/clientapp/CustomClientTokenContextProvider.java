@@ -1,4 +1,4 @@
-package com.broker;
+package com.clientapp;
 
 import javax.ws.rs.core.MultivaluedMap;
 

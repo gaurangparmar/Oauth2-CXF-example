@@ -1,4 +1,4 @@
-package com.broker;
+package com.clientapp;
 
 import java.net.URI;
 
